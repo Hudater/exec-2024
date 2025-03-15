@@ -1,0 +1,570 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <!-- Summary Cards Row -->
+    <div class="row mb-4">
+        <!-- Clear All Button -->
+        <div class="col-12 mb-3">
+            <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#clearAllModal">
+                <i class="fas fa-trash"></i> Clear All Records
+            </button>
+        </div>
+
+        <!-- Income Card -->
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">Total Income</h5>
+                        <div>
+                            <button class="btn btn-light btn-sm me-2" data-bs-toggle="modal" data-bs-target="#clearIncomeModal">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addIncomeModal">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="card-text display-6">₹{{ "%.2f"|format(total_income) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Expenses Card -->
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">Total Expenses</h5>
+                        <div>
+                            <button class="btn btn-light btn-sm me-2" data-bs-toggle="modal" data-bs-target="#clearExpensesModal">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addExpenseModal">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="card-text display-6">₹{{ "%.2f"|format(total_expenses) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Credits Card -->
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">Total Credits</h5>
+                        <div>
+                            <button class="btn btn-light btn-sm me-2" data-bs-toggle="modal" data-bs-target="#clearCreditsModal">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addCreditModal">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="card-text display-6">₹{{ "%.2f"|format(total_credits) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Investments Card -->
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between align-items-start mb-2">
+                        <h5 class="card-title">Total Investments</h5>
+                        <div>
+                            <button class="btn btn-light btn-sm me-2" data-bs-toggle="modal" data-bs-target="#clearInvestmentsModal">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                            <button class="btn btn-light btn-sm" data-bs-toggle="modal" data-bs-target="#addInvestmentModal">
+                                <i class="fas fa-plus"></i>
+                            </button>
+                        </div>
+                    </div>
+                    <p class="card-text display-6">₹{{ "%.2f"|format(total_investments) }}</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Balance Card -->
+        <div class="col-md-12 mt-3">
+            <div class="card {% if balance >= 0 %}bg-success{% else %}bg-danger{% endif %} text-white">
+                <div class="card-body">
+                    <h5 class="card-title">Balance</h5>
+                    <p class="card-text display-6">₹{{ "%.2f"|format(balance) }}</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Recent Transactions -->
+        <div class="col-md-12">
+            <!-- Recent Expenses -->
+            <div class="card mb-4">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Recent Expenses</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Category</th>
+                                    <th>Description</th>
+                                    <th>Payment Mode</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for expense in expenses %}
+                                <tr>
+                                    <td>{{ expense.date.strftime('%Y-%m-%d') }}</td>
+                                    <td><span class="badge bg-primary">{{ expense.category }}</span></td>
+                                    <td>{{ expense.description or '-' }}</td>
+                                    <td><span class="badge bg-info">{{ expense.payment_mode }}</span></td>
+                                    <td class="text-danger">₹{{ "%.2f"|format(expense.amount) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Recent Incomes -->
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Recent Incomes</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Source</th>
+                                    <th>Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for income in incomes %}
+                                <tr>
+                                    <td>{{ income.date.strftime('%Y-%m-%d') }}</td>
+                                    <td><span class="badge bg-success">{{ income.source }}</span></td>
+                                    <td class="text-success">₹{{ "%.2f"|format(income.amount) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Investments -->
+            <div class="card mb-4">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Investment Portfolio</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Type</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Returns (%)</th>
+                                    <th>Current Value</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for investment in investments %}
+                                <tr>
+                                    <td>{{ investment.date.strftime('%Y-%m-%d') }}</td>
+                                    <td><span class="badge bg-info">{{ investment.type }}</span></td>
+                                    <td>{{ investment.description }}</td>
+                                    <td>₹{{ "%.2f"|format(investment.amount) }}</td>
+                                    <td class="{% if investment.returns >= 0 %}text-success{% else %}text-danger{% endif %}">
+                                        {{ "%.2f"|format(investment.returns) }}%
+                                    </td>
+                                    <td class="{% if investment.current_value >= investment.amount %}text-success{% else %}text-danger{% endif %}">
+                                        ₹{{ "%.2f"|format(investment.current_value) }}
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Pending Credits -->
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="card-title mb-0">Pending Credits</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Due Date</th>
+                                    <th>Description</th>
+                                    <th>Amount</th>
+                                    <th>Credit Limit</th>
+                                    <th>Utilization</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for credit in credits %}
+                                <tr>
+                                    <td>{{ credit.due_date.strftime('%Y-%m-%d') }}</td>
+                                    <td>{{ credit.description }}</td>
+                                    <td class="text-warning">₹{{ "%.2f"|format(credit.amount) }}</td>
+                                    <td>₹{{ "%.2f"|format(credit.credit_limit) }}</td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1" style="height: 8px;">
+                                                <div class="progress-bar {% if credit.credit_utilization >= 80 %}bg-danger{% elif credit.credit_utilization >= 50 %}bg-warning{% else %}bg-success{% endif %}" 
+                                                     role="progressbar" 
+                                                     style="width: {{ credit.credit_utilization }}%"
+                                                     aria-valuenow="{{ credit.credit_utilization }}" 
+                                                     aria-valuemin="0" 
+                                                     aria-valuemax="100">
+                                            </div>
+                                        </div>
+                                        <span class="ms-2 {% if credit.credit_utilization >= 80 %}text-danger{% elif credit.credit_utilization >= 50 %}text-warning{% else %}text-success{% endif %}">
+                                            {{ "%.1f"|format(credit.credit_utilization) }}%
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <a href="{{ url_for('mark_credit_paid', credit_id=credit.id) }}" 
+                                           class="btn btn-sm btn-success">Mark as Paid</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Investment Modal -->
+<div class="modal fade" id="addInvestmentModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-info text-white">
+                <h5 class="modal-title">Add New Investment</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('add_investment') }}">
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="type" class="form-label">Investment Type</label>
+                        <select class="form-select" id="type" name="type" required>
+                            <option value="">Select type</option>
+                            <option value="Stocks">Stocks</option>
+                            <option value="Mutual Funds">Mutual Funds</option>
+                            <option value="Fixed Deposit">Fixed Deposit</option>
+                            <option value="Real Estate">Real Estate</option>
+                            <option value="Gold">Gold</option>
+                            <option value="Cryptocurrency">Cryptocurrency</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="description" name="description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="returns" class="form-label">Expected Returns (%)</label>
+                        <input type="number" step="0.01" class="form-control" id="returns" name="returns" required>
+                    </div>
+                    <button type="submit" class="btn btn-info text-white w-100">Add Investment</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Income Modal -->
+<div class="modal fade" id="addIncomeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title">Add New Income</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('dashboard') }}">
+                    {{ income_form.csrf_token }}
+                    <div class="mb-3">
+                        {{ income_form.amount.label(class="form-label") }}
+                        {{ income_form.amount(class="form-control", placeholder="Enter amount") }}
+                        {% if income_form.amount.errors %}
+                        <div class="text-danger">
+                            {% for error in income_form.amount.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ income_form.source.label(class="form-label") }}
+                        {{ income_form.source(class="form-select") }}
+                        {% if income_form.source.errors %}
+                        <div class="text-danger">
+                            {% for error in income_form.source.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-success w-100">Add Income</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Expense Modal -->
+<div class="modal fade" id="addExpenseModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">Add New Expense</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('dashboard') }}">
+                    {{ expense_form.csrf_token }}
+                    <div class="mb-3">
+                        {{ expense_form.amount.label(class="form-label") }}
+                        {{ expense_form.amount(class="form-control", placeholder="Enter amount") }}
+                        {% if expense_form.amount.errors %}
+                        <div class="text-danger">
+                            {% for error in expense_form.amount.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ expense_form.category.label(class="form-label") }}
+                        {{ expense_form.category(class="form-select") }}
+                        {% if expense_form.category.errors %}
+                        <div class="text-danger">
+                            {% for error in expense_form.category.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ expense_form.payment_mode.label(class="form-label") }}
+                        {{ expense_form.payment_mode(class="form-select") }}
+                        {% if expense_form.payment_mode.errors %}
+                        <div class="text-danger">
+                            {% for error in expense_form.payment_mode.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <div class="mb-3">
+                        {{ expense_form.description.label(class="form-label") }}
+                        {{ expense_form.description(class="form-control", placeholder="Enter description") }}
+                        {% if expense_form.description.errors %}
+                        <div class="text-danger">
+                            {% for error in expense_form.description.errors %}
+                            <small>{{ error }}</small>
+                            {% endfor %}
+                        </div>
+                        {% endif %}
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">Add Expense</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Credit Form Modal -->
+<div class="modal fade" id="addCreditModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-warning text-white">
+                <h5 class="modal-title">Add New Credit</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <form method="POST" action="{{ url_for('add_credit') }}">
+                    <div class="mb-3">
+                        <label for="amount" class="form-label">Amount</label>
+                        <input type="number" step="0.01" class="form-control" id="amount" name="amount" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="credit_limit" class="form-label">Credit Limit</label>
+                        <input type="number" step="0.01" class="form-control" id="credit_limit" name="credit_limit" required>
+                        <small class="form-text text-muted">Enter the maximum credit limit for this credit.</small>
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Description</label>
+                        <input type="text" class="form-control" id="description" name="description" required>
+                    </div>
+                    <div class="mb-3">
+                        <label for="due_date" class="form-label">Due Date</label>
+                        <input type="date" class="form-control" id="due_date" name="due_date" required>
+                    </div>
+                    <button type="submit" class="btn btn-warning w-100">Add Credit</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear All Modal -->
+<div class="modal fade" id="clearAllModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Clear All Records</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to clear all financial records? This will delete:</p>
+                <ul>
+                    <li>All expenses</li>
+                    <li>All incomes</li>
+                    <li>All credits</li>
+                    <li>All investments</li>
+                    <li>All budget settings</li>
+                </ul>
+                <p class="text-danger"><strong>This action cannot be undone!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('clear_all_records') }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Clear All Records</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Income Modal -->
+<div class="modal fade" id="clearIncomeModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Clear Income Records</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to clear all income records?</p>
+                <p class="text-danger"><strong>This action cannot be undone!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('clear_income_records') }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Clear Income Records</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Expenses Modal -->
+<div class="modal fade" id="clearExpensesModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Clear Expense Records</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to clear all expense records?</p>
+                <p class="text-danger"><strong>This action cannot be undone!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('clear_expense_records') }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Clear Expense Records</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Credits Modal -->
+<div class="modal fade" id="clearCreditsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Clear Credit Records</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to clear all credit records?</p>
+                <p class="text-danger"><strong>This action cannot be undone!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('clear_credit_records') }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Clear Credit Records</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Clear Investments Modal -->
+<div class="modal fade" id="clearInvestmentsModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">Clear Investment Records</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure you want to clear all investment records?</p>
+                <p class="text-danger"><strong>This action cannot be undone!</strong></p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <form action="{{ url_for('clear_investment_records') }}" method="POST">
+                    <button type="submit" class="btn btn-danger">Clear Investment Records</button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Initialize all modals
+    var modals = document.querySelectorAll('.modal');
+    modals.forEach(function(modal) {
+        new bootstrap.Modal(modal);
+    });
+</script>
+{% endblock %} 

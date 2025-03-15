@@ -1,0 +1,137 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="row">
+        <!-- Spending by Category -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-primary text-white">
+                    <h5 class="card-title mb-0">Spending by Category</h5>
+                </div>
+                <div class="card-body">
+                    {% if category_data != '[]' %}
+                    <div id="categoryChart"></div>
+                    {% else %}
+                    <p class="text-center text-muted">No expenses recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Income by Source -->
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header bg-success text-white">
+                    <h5 class="card-title mb-0">Income by Source</h5>
+                </div>
+                <div class="card-body">
+                    {% if income_data != '[]' %}
+                    <div id="incomeChart"></div>
+                    {% else %}
+                    <p class="text-center text-muted">No income recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Spending Timeline -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-info text-white">
+                    <h5 class="card-title mb-0">Spending Timeline</h5>
+                </div>
+                <div class="card-body">
+                    {% if timeline_data != '[]' %}
+                    <div id="timelineChart"></div>
+                    {% else %}
+                    <p class="text-center text-muted">No expenses recorded yet.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Predictions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="card-title mb-0">AI Spending Predictions</h5>
+                </div>
+                <div class="card-body">
+                    {% if predictions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Predicted Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for date, amount in predictions.items() %}
+                                <tr>
+                                    <td>{{ date }}</td>
+                                    <td class="text-warning">₹{{ "%.2f"|format(amount) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">No predictions available yet. Add some expenses to see predictions.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Category Chart
+    var categoryData = {{ category_data|safe }};
+    if (categoryData.length > 0) {
+        var categoryLayout = {
+            title: 'Spending by Category',
+            height: 400,
+            colorway: ['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b', '#e377c2', '#7f7f7f']
+        };
+        Plotly.newPlot('categoryChart', categoryData, categoryLayout);
+    }
+
+    // Income Chart
+    var incomeData = {{ income_data|safe }};
+    if (incomeData.length > 0) {
+        var incomeLayout = {
+            title: 'Income by Source',
+            height: 400,
+            colorway: ['#2ecc71', '#3498db', '#9b59b6', '#e74c3c', '#f1c40f']
+        };
+        Plotly.newPlot('incomeChart', incomeData, incomeLayout);
+    }
+
+    // Timeline Chart
+    var timelineData = {{ timeline_data|safe }};
+    if (timelineData.length > 0) {
+        var timelineLayout = {
+            title: 'Spending Over Time',
+            height: 400,
+            xaxis: {
+                title: 'Date'
+            },
+            yaxis: {
+                title: 'Amount (₹)'
+            },
+            colorway: ['#3498db']
+        };
+        Plotly.newPlot('timelineChart', timelineData, timelineLayout);
+    }
+</script>
+{% endblock %} 
