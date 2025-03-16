@@ -1,0 +1,21 @@
+services:
+    web:
+        container_name: exec-hack
+        build: .
+        restart: unless-stopped
+        # Uncomment ports if not running via traefik
+        ports:
+            - "8080:5002"
+        env_file:
+            - ".env"
+
+        # Not needed if not running via traefik
+#         labels:
+#             traefik.enable: true
+#             traefik.http.routers.exec-hack.rule: Host(`xenifite.${CF_DOMAIN}`)
+#         networks:
+#           - proxy
+
+# networks:
+#   proxy:
+#     external: true

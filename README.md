@@ -11,31 +11,50 @@ A modern web application for tracking personal finances with AI-powered insights
 - Modern and responsive UI
 - Real-time expense analysis
 
-## Setup
+## Setup 
+
+### Docker
 
 1. Clone the repository:
 ```bash
-git clone <repository-url>
-cd finance-tracker
+git clone https://github.com/Hudater/exec-2024.git
+cd exec-2024
 ```
 
-2. Create a virtual environment and activate it:
+2. Docker compose up
+```bash
+docker compose up -d
+```
+
+3. Enjoy (kind of, very lame app so not much to enjoy :)
+
+visit http://localhost:8080
+
+### Baremetal
+
+1. Clone the repository:
+```bash
+git clone https://github.com/Hudater/exec-2024.git
+cd exec-2024
+```
+
+1. Create a virtual environment and activate it:
 ```bash
 python -m venv venv
 source venv/bin/activate  # On Windows, use: venv\Scripts\activate
 ```
 
-3. Install the required packages:
+1. Install the required packages:
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Initialize the database:
+1. Initialize the database:
 ```bash
 python app.py
 ```
 
-5. Open your browser and navigate to `http://localhost:5000`
+1. Open your browser and navigate to `http://localhost:5000`
 
 ## Usage
 
