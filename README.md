@@ -4,6 +4,7 @@ A modern web application for tracking personal finances with AI-powered insights
 
 Take a look yourself [here](https://xenifite.hudater.xyz/)
 
+
 ## Features
 
 -   User authentication and secure data storage
@@ -12,6 +13,16 @@ Take a look yourself [here](https://xenifite.hudater.xyz/)
 -   AI-powered spending predictions
 -   Modern and responsive UI
 -   Real-time expense analysis
+
+## Deployment server details
+
+
+| Infra | Details |
+| ------ | ------ |
+| Server | Oracle Cloud |
+| CDN | Cloudflare |
+| Reverse Proxy | Traefik v3 |
+| IDP | Crowdsec |
 
 ## Setup
 
