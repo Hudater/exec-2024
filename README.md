@@ -21,12 +21,17 @@ git clone https://github.com/Hudater/exec-2024.git
 cd exec-2024
 ```
 
-2. Docker compose up
+2. Copy and modify env:
+```bash
+cp .env.demo .env
+```
+
+3. Docker compose up
 ```bash
 docker compose up -d
 ```
 
-3. Enjoy (kind of, very lame app so not much to enjoy :)
+4. Enjoy (kind of, very lame app so not much to enjoy :)
 
 visit http://localhost:8080
 
