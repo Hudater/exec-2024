@@ -1,0 +1,350 @@
+{% extends "base.html" %}
+
+{% block title %}Analytics{% endblock %}
+
+{% block content %}
+<!-- Chart.js CDN -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<!-- Data initialization -->
+<script type="application/json" id="finance-data">
+{{ {
+    'budgetData': budget_data,
+    'expensesData': expenses,
+    'incomesData': incomes,
+    'creditsData': credits
+} | tojson | safe }}
+</script>
+
+<div class="container mt-4">
+    <h2 class="mb-4">Financial Analytics</h2>
+
+    <!-- Budget Overview Section -->
+    <div class="row mb-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Budget Allocation vs Spending</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="budgetChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Credit Utilization</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="creditChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Income and Expense Section -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Income Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="incomeChart"></canvas>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">Expense Distribution</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="expenseChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Predictions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-warning text-white">
+                    <h5 class="card-title mb-0">AI Spending Predictions</h5>
+                </div>
+                <div class="card-body">
+                    {% if predictions %}
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th>Predicted Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for date, amount in predictions.items() %}
+                                <tr>
+                                    <td>{{ date }}</td>
+                                    <td class="text-warning">₹{{ "%.2f"|format(amount) }}</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                    {% else %}
+                    <p class="text-center text-muted">No predictions available yet. Add some expenses to see predictions.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Initialize data from embedded JSON
+let financeData;
+try {
+    const rawData = document.getElementById('finance-data').textContent;
+    console.log('Raw data:', rawData);
+    financeData = JSON.parse(rawData);
+    console.log('Parsed finance data:', financeData);
+} catch (error) {
+    console.error('Error parsing finance data:', error);
+}
+
+// Helper function to get random colors
+function getRandomColor() {
+    const letters = '0123456789ABCDEF';
+    let color = '#';
+    for (let i = 0; i < 6; i++) {
+        color += letters[Math.floor(Math.random() * 16)];
+    }
+    return color;
+}
+
+// Budget Chart
+function renderBudgetChart() {
+    try {
+        console.log('Rendering budget chart...');
+        const budgetCtx = document.getElementById('budgetChart');
+        if (!budgetCtx) {
+            console.error('Budget chart canvas not found');
+            return;
+        }
+
+        const budgetCategories = financeData.budgetData.map(item => item.category);
+        const budgetAmounts = financeData.budgetData.map(item => item.amount);
+        const spentAmounts = financeData.budgetData.map(item => item.spent_amount);
+
+        console.log('Budget data:', {
+            categories: budgetCategories,
+            amounts: budgetAmounts,
+            spent: spentAmounts
+        });
+
+        new Chart(budgetCtx, {
+            type: 'doughnut',
+            data: {
+                labels: budgetCategories,
+                datasets: [
+                    {
+                        label: 'Budget Allocated',
+                        data: budgetAmounts,
+                        backgroundColor: budgetCategories.map(() => getRandomColor())
+                    },
+                    {
+                        label: 'Amount Spent',
+                        data: spentAmounts,
+                        backgroundColor: budgetCategories.map(() => getRandomColor())
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Budget Allocation vs Spending'
+                    }
+                }
+            }
+        });
+        console.log('Budget chart rendered successfully');
+    } catch (error) {
+        console.error('Error rendering budget chart:', error);
+    }
+}
+
+// Credit Chart
+function renderCreditChart() {
+    try {
+        console.log('Rendering credit chart...');
+        const creditCtx = document.getElementById('creditChart');
+        if (!creditCtx) {
+            console.error('Credit chart canvas not found');
+            return;
+        }
+
+        const creditLabels = financeData.creditsData.map(item => item.description);
+        const creditAmounts = financeData.creditsData.map(item => item.amount);
+        const creditLimits = financeData.creditsData.map(item => item.credit_limit);
+
+        console.log('Credit data:', {
+            labels: creditLabels,
+            amounts: creditAmounts,
+            limits: creditLimits
+        });
+
+        new Chart(creditCtx, {
+            type: 'bar',
+            data: {
+                labels: creditLabels,
+                datasets: [
+                    {
+                        label: 'Credit Used',
+                        data: creditAmounts,
+                        backgroundColor: 'rgba(255, 99, 132, 0.5)',
+                        borderColor: 'rgb(255, 99, 132)',
+                        borderWidth: 1
+                    },
+                    {
+                        label: 'Credit Limit',
+                        data: creditLimits,
+                        backgroundColor: 'rgba(54, 162, 235, 0.5)',
+                        borderColor: 'rgb(54, 162, 235)',
+                        borderWidth: 1
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true
+                    }
+                }
+            }
+        });
+        console.log('Credit chart rendered successfully');
+    } catch (error) {
+        console.error('Error rendering credit chart:', error);
+    }
+}
+
+// Income Chart
+function renderIncomeChart() {
+    try {
+        console.log('Rendering income chart...');
+        const incomeCtx = document.getElementById('incomeChart');
+        if (!incomeCtx) {
+            console.error('Income chart canvas not found');
+            return;
+        }
+
+        const incomeSources = [...new Set(financeData.incomesData.map(item => item.source))];
+        const incomeAmounts = incomeSources.map(source => 
+            financeData.incomesData
+                .filter(item => item.source === source)
+                .reduce((sum, item) => sum + item.amount, 0)
+        );
+
+        console.log('Income data:', {
+            sources: incomeSources,
+            amounts: incomeAmounts
+        });
+
+        new Chart(incomeCtx, {
+            type: 'pie',
+            data: {
+                labels: incomeSources,
+                datasets: [{
+                    data: incomeAmounts,
+                    backgroundColor: incomeSources.map(() => getRandomColor())
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        console.log('Income chart rendered successfully');
+    } catch (error) {
+        console.error('Error rendering income chart:', error);
+    }
+}
+
+// Expense Chart
+function renderExpenseChart() {
+    try {
+        console.log('Rendering expense chart...');
+        const expenseCtx = document.getElementById('expenseChart');
+        if (!expenseCtx) {
+            console.error('Expense chart canvas not found');
+            return;
+        }
+
+        const expenseCategories = [...new Set(financeData.expensesData.map(item => item.category))];
+        const expenseAmounts = expenseCategories.map(category => 
+            financeData.expensesData
+                .filter(item => item.category === category)
+                .reduce((sum, item) => sum + item.amount, 0)
+        );
+
+        console.log('Expense data:', {
+            categories: expenseCategories,
+            amounts: expenseAmounts
+        });
+
+        new Chart(expenseCtx, {
+            type: 'pie',
+            data: {
+                labels: expenseCategories,
+                datasets: [{
+                    data: expenseAmounts,
+                    backgroundColor: expenseCategories.map(() => getRandomColor())
+                }]
+            },
+            options: {
+                responsive: true,
+                plugins: {
+                    legend: {
+                        position: 'bottom'
+                    }
+                }
+            }
+        });
+        console.log('Expense chart rendered successfully');
+    } catch (error) {
+        console.error('Error rendering expense chart:', error);
+    }
+}
+
+// Initialize all charts when the document is ready
+document.addEventListener('DOMContentLoaded', function() {
+    try {
+        console.log('Initializing charts...');
+        if (!financeData) {
+            console.error('Finance data not available');
+            return;
+        }
+        renderBudgetChart();
+        renderCreditChart();
+        renderIncomeChart();
+        renderExpenseChart();
+        console.log('All charts initialized successfully');
+    } catch (error) {
+        console.error('Error initializing charts:', error);
+    }
+});
+</script>
+{% endblock %} 

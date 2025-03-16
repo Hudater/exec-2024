@@ -342,104 +342,102 @@ def mark_credit_paid(credit_id):
 @app.route('/analytics')
 @login_required
 def analytics():
+    # Get all financial data for the current user
     expenses = Expense.query.filter_by(user_id=current_user.id).all()
     incomes = Income.query.filter_by(user_id=current_user.id).all()
-    
-    if not expenses and not incomes:
-        return render_template('analytics.html', 
-                             category_data=json.dumps([]),
-                             timeline_data=json.dumps([]),
-                             income_data=json.dumps([]),
-                             predictions={})
-    
-    # Prepare data for category pie chart
-    if expenses:
-        df_expenses = pd.DataFrame([{'category': e.category, 'amount': e.amount} for e in expenses])
-        category_data = px.pie(df_expenses, values='amount', names='category', title='Spending by Category')
-    else:
-        category_data = px.pie(pd.DataFrame(), values=[], names=[], title='Spending by Category')
-    
-    # Prepare data for timeline chart
-    if expenses:
-        df_expenses['date'] = pd.to_datetime([e.date for e in expenses])
-        df_expenses = df_expenses.sort_values('date')
-        timeline_data = px.line(df_expenses, x='date', y='amount', title='Spending Over Time')
-    else:
-        timeline_data = px.line(pd.DataFrame(), x=[], y=[], title='Spending Over Time')
-    
-    # Prepare data for income chart
-    if incomes:
-        df_incomes = pd.DataFrame([{'source': i.source, 'amount': i.amount} for i in incomes])
-        income_data = px.pie(df_incomes, values='amount', names='source', title='Income by Source')
-    else:
-        income_data = px.pie(pd.DataFrame(), values=[], names=[], title='Income by Source')
-    
-    # Generate predictions for next week
-    if expenses:
-        df = pd.DataFrame([{'date': e.date, 'amount': e.amount} for e in expenses])
-        df = df.sort_values('date')
-        
-        X = np.array(range(len(df))).reshape(-1, 1)
-        y = df['amount'].values
-        
-        model = LinearRegression()
-        model.fit(X, y)
-        
-        future_dates = pd.date_range(start=df['date'].max(), periods=8, freq='D')[1:]
-        future_X = np.array(range(len(df), len(df) + 7)).reshape(-1, 1)
-        predictions = model.predict(future_X)
-        
-        predictions_dict = {date.strftime('%Y-%m-%d'): float(amount) 
-                          for date, amount in zip(future_dates, predictions)}
-    else:
-        predictions_dict = {}
-    
-    return render_template('analytics.html', 
-                         category_data=category_data.to_json(),
-                         timeline_data=timeline_data.to_json(),
-                         income_data=income_data.to_json(),
-                         predictions=predictions_dict)
+    credits = Credit.query.filter_by(user_id=current_user.id, paid=False).all()
+    budgets = Budget.query.filter_by(user_id=current_user.id).all()
+
+    # Prepare budget data with additional calculations
+    budget_data = [{
+        'category': budget.category,
+        'amount': budget.amount,
+        'spent_amount': budget.spent_amount,
+        'remaining_amount': budget.remaining_amount,
+        'percentage_used': budget.percentage_used
+    } for budget in budgets]
+
+    # Convert date objects to string format for JSON serialization
+    expenses_data = [{
+        'amount': expense.amount,
+        'category': expense.category,
+        'date': expense.date.strftime('%Y-%m-%d')
+    } for expense in expenses]
+
+    incomes_data = [{
+        'amount': income.amount,
+        'source': income.source,
+        'date': income.date.strftime('%Y-%m-%d')
+    } for income in incomes]
+
+    credits_data = [{
+        'amount': credit.amount,
+        'description': credit.description,
+        'due_date': credit.due_date.strftime('%Y-%m-%d'),
+        'credit_limit': credit.credit_limit or 0
+    } for credit in credits]
+
+    return render_template('analytics.html',
+                         expenses=expenses_data,
+                         incomes=incomes_data,
+                         credits=credits_data,
+                         budgets=budgets,
+                         budget_data=budget_data)
 
 @app.route('/budget', methods=['GET', 'POST'])
 @login_required
 def budget():
     if request.method == 'POST':
-        category = request.form['category']
-        amount = float(request.form['amount'])
-        month = int(request.form['month'])
-        year = int(request.form['year'])
-        
-        # Check if budget already exists for this category and month/year
-        existing_budget = Budget.query.filter_by(
-            user_id=current_user.id,
-            category=category,
-            month=month,
-            year=year
-        ).first()
-        
-        if existing_budget:
-            existing_budget.amount = amount
+        if 'budget_id' in request.form:
+            # Handle budget edit
+            budget_id = int(request.form['budget_id'])
+            amount = float(request.form['amount'])
+            
+            budget = Budget.query.get_or_404(budget_id)
+            if budget.user_id != current_user.id:
+                flash('Unauthorized action!', 'danger')
+                return redirect(url_for('budget'))
+            
+            budget.amount = amount
+            db.session.commit()
             flash('Budget updated successfully!', 'success')
         else:
-            budget = Budget(
+            # Handle new budget
+            category = request.form['category']
+            amount = float(request.form['amount'])
+            month = int(request.form['month'])
+            year = int(request.form['year'])
+            
+            # Check if budget already exists for this category and month/year
+            existing_budget = Budget.query.filter_by(
+                user_id=current_user.id,
                 category=category,
-                amount=amount,
                 month=month,
-                year=year,
-                user_id=current_user.id
-            )
-            db.session.add(budget)
-            flash('Budget added successfully!', 'success')
+                year=year
+            ).first()
+            
+            if existing_budget:
+                existing_budget.amount = amount
+                flash('Budget updated successfully!', 'success')
+            else:
+                budget = Budget(
+                    category=category,
+                    amount=amount,
+                    month=month,
+                    year=year,
+                    user_id=current_user.id
+                )
+                db.session.add(budget)
+                flash('Budget added successfully!', 'success')
+            
+            db.session.commit()
         
-        db.session.commit()
         return redirect(url_for('budget'))
     
-    # Get current month's budgets
-    current_date = datetime.now()
-    current_budgets = Budget.query.filter_by(
-        user_id=current_user.id,
-        month=current_date.month,
-        year=current_date.year
+    # Get all budgets for display, ordered by month and year
+    budgets = Budget.query.filter_by(user_id=current_user.id).order_by(
+        Budget.year.desc(),
+        Budget.month.desc()
     ).all()
     
     # Get unique expense categories for the user
@@ -447,16 +445,26 @@ def budget():
     categories = [category[0] for category in categories]
     
     # Calculate total budget and total spent
-    total_budget = sum(budget.amount for budget in current_budgets)
-    total_spent = sum(budget.spent_amount for budget in current_budgets)
+    total_budget = sum(budget.amount for budget in budgets)
+    total_spent = sum(budget.spent_amount for budget in budgets)
     
     return render_template('budget.html',
-                         budgets=current_budgets,
+                         budgets=budgets,
                          categories=categories,
-                         current_month=current_date.month,
-                         current_year=current_date.year,
+                         current_month=datetime.now().month,
+                         current_year=datetime.now().year,
                          total_budget=total_budget,
-                         total_spent=total_spent)
+                         total_spent=total_spent,
+                         min=min)
+
+@app.route('/clear_all_budgets', methods=['POST'])
+@login_required
+def clear_all_budgets():
+    # Delete all budgets for the current user
+    Budget.query.filter_by(user_id=current_user.id).delete()
+    db.session.commit()
+    flash('All budget records have been cleared!', 'success')
+    return redirect(url_for('budget'))
 
 @app.route('/clear_category/<category>', methods=['POST'])
 @login_required
