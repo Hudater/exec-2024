@@ -10,9 +10,20 @@ import plotly.express as px
 import plotly.graph_objects as go
 import json
 from forms import ExpenseForm, IncomeForm
+import os
+from os.path import join, dirname
+# from dotenv import load_dotenv
+# from dotenv import load_dotenv, find_dotenv
+from dotenv import load_dotenv
+load_dotenv(".env")
+# load_dotenv(find_dotenv())
+
+# dotenv_path = join(dirname(__file__), '.env')
+# load_dotenv(dotenv_path)
 
 app = Flask(__name__)
-app.config['SECRET_KEY'] = 'your-secret-key-here'
+# app.config['SECRET_KEY'] = 'dafsdfasdfasdfgasjkhfgasjghf'
+app.config['SECRET_KEY'] = os.environ.get('APP_SECRET_KEY')
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///finance.db'
 db = SQLAlchemy(app)
 login_manager = LoginManager()
